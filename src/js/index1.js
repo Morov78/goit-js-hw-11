@@ -5,8 +5,8 @@ import axios from 'axios';
 import { throttle } from 'lodash';
 import simpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import { refs, api } from './js/refs'; //імпортую об"єкт елементів refs і дані api ключ і базовий url
-import { markUpGallery } from './js/markup_gallery'; //імпортую об"єкт для побудови галереї з завантажених даних
+import { refs, api } from './refs'; //імпортую об"єкт елементів refs і дані api ключ і базовий url
+import { markUpGallery } from './markup_gallery'; //імпортую об"єкт для побудови галереї з завантажених даних
 
 var lightbox = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
