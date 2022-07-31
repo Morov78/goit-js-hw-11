@@ -23,7 +23,7 @@ const TENDA_SCROLL = 1.3; //коефіцієнт спрацювання підг
 // Події
 refs.form.addEventListener('submit', onSubmitForm);
 // refs.buttonLoadMore.addEventListener('click', onClickButtonLoadMore);
-window.addEventListener('scroll', throttle(onScroll, 500));
+window.addEventListener('scroll', throttle(onScroll, 300));
 refs.buttonPageTop.addEventListener('click', onClickButtonPageTop);
 
 // функція безперервного скрола
@@ -31,7 +31,10 @@ function infiniteScroll() {
   const heightWindow = window.innerHeight;
   const positionY = window.scrollY;
   const maxY = refs.gallery.clientHeight;
-  if (maxY - positionY < TENDA_SCROLL * heightWindow) {
+  if (
+    (maxY - positionY < TENDA_SCROLL * heightWindow) &
+    (positionY > heightWindow)
+  ) {
     onClickButtonLoadMore();
   }
 }
@@ -39,7 +42,6 @@ function infiniteScroll() {
 function onSubmitForm(e) {
   e.preventDefault();
   if (timerInterval !== 0) {
-    console.log('перевірка чи треба');
     clearInterval(timerInterval);
   }
 
@@ -48,7 +50,7 @@ function onSubmitForm(e) {
   refs.gallery.innerHTML = '';
   refs.outputPagesLoad.textContent = '';
   fetchData();
-  timerInterval = setInterval(infiniteScroll, 400);
+  timerInterval = setInterval(infiniteScroll, 500);
 }
 // функція-колбек для події на кнопці "load-more"+
 function onClickButtonLoadMore() {
@@ -103,7 +105,7 @@ async function fetchData() {
       Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
     }
 
-    renderGallery(response.data.hits);
+    await renderGallery(response.data.hits);
     lightbox.refresh();
 
     refs.outputPagesLoad.textContent = `${
