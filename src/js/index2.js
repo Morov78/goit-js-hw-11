@@ -1,5 +1,5 @@
 // імпортуємо бібліотеки
-import './css/styles.css';
+import '../css/styles.css';
 import Notiflix from 'notiflix';
 import axios from 'axios';
 import { throttle } from 'lodash';
@@ -18,22 +18,37 @@ const params = {
   per_page: 40,
   q: '',
 };
-
+let timerInterval = 0;
+const TENDA_SCROLL = 1.3; //коефіцієнт спрацювання підгрузки елементів галереї, від висоти екрана
 // Події
 refs.form.addEventListener('submit', onSubmitForm);
-refs.buttonLoadMore.addEventListener('click', onClickButtonLoadMore);
+// refs.buttonLoadMore.addEventListener('click', onClickButtonLoadMore);
 window.addEventListener('scroll', throttle(onScroll, 500));
 refs.buttonPageTop.addEventListener('click', onClickButtonPageTop);
 
+// функція безперервного скрола
+function infiniteScroll() {
+  const heightWindow = window.innerHeight;
+  const positionY = window.scrollY;
+  const maxY = refs.gallery.clientHeight;
+  if (maxY - positionY < TENDA_SCROLL * heightWindow) {
+    onClickButtonLoadMore();
+  }
+}
 // функція-колбек події сабміта +
 function onSubmitForm(e) {
   e.preventDefault();
+  if (timerInterval !== 0) {
+    console.log('перевірка чи треба');
+    clearInterval(timerInterval);
+  }
+
   params.page = 1;
   params.q = e.currentTarget.elements.searchQuery.value;
   refs.gallery.innerHTML = '';
   refs.outputPagesLoad.textContent = '';
-  refs.buttonLoadMore.classList.add('is-hidden');
   fetchData();
+  timerInterval = setInterval(infiniteScroll, 400);
 }
 // функція-колбек для події на кнопці "load-more"+
 function onClickButtonLoadMore() {
@@ -75,31 +90,34 @@ async function fetchData() {
     const response = await axios.get(`${api.BASE_URL}?${parametrs}`);
     const loadHits = response.data.hits.length;
     const totalHits = response.data.totalHits;
-    if (loadHits === 0) {
+    // перевірка коли нічого не знаходить при першому запиті від користувача
+    if ((loadHits === 0) & (params.page === 1)) {
+      clearInterval(timerInterval);
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
       return;
     }
-
+    // виводить кількість знайдених елементів при кліку на пошук
     if (params.page === 1) {
       Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
     }
 
     renderGallery(response.data.hits);
     lightbox.refresh();
-    refs.buttonLoadMore.classList.remove('is-hidden');
+
     refs.outputPagesLoad.textContent = `${
       (params.page - 1) * params.per_page + loadHits
     } of ${totalHits}`;
-
+    // перевірка коли завантажили максимальну кількість елементів
     if (params.page * params.per_page >= totalHits) {
-      refs.buttonLoadMore.classList.add('is-hidden');
+      console.log('треба виключити інтервал');
+      clearInterval(timerInterval);
       Notiflix.Notify.warning(
         "We're sorry, but you've reached the end of search results."
       );
     }
   } catch (error) {
-    console.log(error.response.status);
+    console.log(error);
   }
 }
